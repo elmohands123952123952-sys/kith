@@ -1,96 +1,98 @@
 <!DOCTYPE html>
-<html lang="en" dir="rtl">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>One Million Café | Premium</title>
+    <title>One Million Café | النسخة المتكاملة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #d4af37; --bg: #050505; --card: #111; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; -webkit-user-select: none; }
+        :root { --gold: #d4af37; --bg: #050505; --card: #121212; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; }
         body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 120px; }
         
-        header { padding: 30px; text-align: center; border-bottom: 2px solid var(--gold); background: #000; }
-        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); letter-spacing: 2px; }
+        /* منع الزوم والتحكم */
+        input { font-size: 16px !important; }
 
-        .nav-bar { display: flex; background: #111; border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 1000; }
-        .nav-item { flex: 1; padding: 15px; text-align: center; color: #888; font-weight: bold; cursor: pointer; }
-        .nav-item.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212, 175, 55, 0.1); }
+        header { padding: 30px; text-align: center; border-bottom: 2px solid var(--gold); background: #000; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); text-transform: uppercase; }
 
-        /* الأقسام مع الصور */
-        .categories-grid { padding: 20px; display: grid; gap: 15px; }
+        .nav-tabs { display: flex; background: #111; border-bottom: 1px solid #222; }
+        .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212, 175, 55, 0.1); }
+
+        /* شبكة الأقسام */
+        .categories-grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .cat-card { 
-            height: 130px; border-radius: 20px; position: relative; overflow: hidden;
+            height: 150px; border-radius: 20px; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: center; border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .cat-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-        .cat-card h3 { position: relative; z-index: 2; font-size: 1.8rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 8px #000; }
+        .cat-card h3 { position: relative; z-index: 2; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 10px #000; text-align: center; }
 
-        /* قائمة المنتجات */
-        #menuView { display: none; padding: 20px; }
-        .product-card { 
-            background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 10px;
+        /* عرض المنتجات */
+        #menuView { display: none; padding: 15px; animation: fadeIn 0.4s; }
+        .item-card { 
+            background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 12px;
             display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;
         }
-        .info b { font-size: 1.1rem; color: #fff; display: block; text-align: left; }
-        .info span { color: var(--gold); font-weight: 900; }
-        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 900; }
+        .item-info b { display: block; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
+        .item-info span { color: var(--gold); font-weight: 900; font-size: 1rem; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; }
 
-        /* المودال (نافذة البيانات) */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--gold); }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; text-align: center; }
+        /* المودال الاحترافي لبيانات الطلب */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal-box { background: #1a1a1a; padding: 30px; border-radius: 25px; width: 100%; max-width: 400px; border: 1px solid var(--gold); text-align: center; }
+        .modal-box h2 { color: var(--gold); margin-bottom: 20px; font-size: 1.5rem; }
+        .modal-box input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 12px; text-align: center; }
 
-        .cart-footer { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; z-index: 2000; }
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 10px 30px; border-radius: 50px; font-weight: bold; z-index: 5000; display: none; }
+        .footer-cart { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 22px; text-align: center; font-weight: 900; font-size: 1.3rem; z-index: 2000; cursor: pointer; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        
+        /* الأنيميشن */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div id="toast"></div>
+<header><div class="logo">ONE MILLION CAFÉ</div></header>
 
-<header><div class="logo">ONE MILLION</div></header>
-
-<div class="nav-bar">
-    <div class="nav-item active" id="btnMain" onclick="tab('main')">MENU</div>
-    <div class="nav-item" id="btnHistory" onclick="tab('history')">ORDERS</div>
+<div class="nav-tabs">
+    <div class="tab active" id="tabMenu" onclick="changeView('menu')">المنيو</div>
+    <div class="tab" id="tabHistory" onclick="changeView('history')">طلباتي</div>
 </div>
 
-<div id="mainView" class="categories-grid">
-    <div class="cat-card" onclick="openCat('HOT')"><img src="https://bit.ly/3LzV2yZ"><h3>HOT DRINKS</h3></div>
-    <div class="cat-card" onclick="openCat('ICED')"><img src="https://bit.ly/3DsK2W1"><h3>ICED DRINKS</h3></div>
-    <div class="cat-card" onclick="openCat('MATCHA')"><img src="https://bit.ly/3BvO7r5"><h3>MATCHA</h3></div>
-    <div class="cat-card" onclick="openCat('DESSERTS')"><img src="https://bit.ly/3Rz6A1N"><h3>DESSERTS</h3></div>
-    <div class="cat-card" onclick="openCat('CROISSANT')"><img src="https://bit.ly/3S7tW2h"><h3>CROISSANT</h3></div>
-    <div class="cat-card" onclick="openCat('SODA')"><img src="https://bit.ly/3Bc8mX6"><h3>ITALIAN SODA</h3></div>
+<div id="gridSection" class="categories-grid">
+    <div class="cat-card" onclick="openCategory('ARABIC')"><img src="https://images.unsplash.com/photo-1599421142713-d08343715f20?w=400"><h3>القهوة العربية والشاي</h3></div>
+    <div class="cat-card" onclick="openCategory('HOT')"><img src="https://images.unsplash.com/photo-1541167760496-1628856ab752?w=400"><h3>HOT DRINKS</h3></div>
+    <div class="cat-card" onclick="openCategory('ICED')"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400"><h3>ICED DRINKS</h3></div>
+    <div class="cat-card" onclick="openCategory('MATCHA')"><img src="https://images.unsplash.com/photo-1582722872445-443590453016?w=400"><h3>MATCHA</h3></div>
+    <div class="cat-card" onclick="openCategory('SPECIALTY')"><img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400"><h3>SPECIALTY DRIP</h3></div>
+    <div class="cat-card" onclick="openCategory('DESSERTS')"><img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400"><h3>DESSERTS</h3></div>
+    <div class="cat-card" onclick="openCategory('CROISSANT')"><img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400"><h3>CROISSANT</h3></div>
+    <div class="cat-card" onclick="openCategory('SODA')"><img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400"><h3>MOJITO & SODA</h3></div>
 </div>
 
 <div id="menuView">
-    <button onclick="tab('main')" style="color:var(--gold); background:none; border:none; margin-bottom:15px; font-weight:bold;">← BACK</button>
+    <button onclick="backToMain()" style="background:none; border:none; color:var(--gold); font-weight:bold; margin-bottom:20px; font-size:1rem;">← العودة للأقسام</button>
     <div id="itemsContainer"></div>
 </div>
 
 <div id="historyView" style="display:none; padding:20px;">
-    <h2 style="color:var(--gold); margin-bottom:15px;">Order History</h2>
-    <div id="historyList"></div>
+    <h3 style="color:var(--gold); margin-bottom:20px;">حالة طلباتك الحالية</h3>
+    <div id="ordersContainer"></div>
 </div>
 
-<div class="cart-footer" id="cartBar" style="display:none;" onclick="openOrderModal()">🛒 CHECKOUT (<span id="count">0</span>)</div>
+<div class="footer-cart" id="cartStrip" style="display:none;" onclick="showOrderForm(true)">🛒 مراجعة الطلب (<span id="cartQty">0</span>)</div>
 
-<div id="orderModal" class="modal">
-    <div class="modal-content">
-        <h3 style="text-align:center; color:var(--gold);">Order Details</h3>
-        <input type="text" id="custName" placeholder="Your Name">
-        <input type="number" id="tabNum" placeholder="Table Number">
-        <select id="pMethod" onchange="document.getElementById('wInfo').style.display=this.value==='w'?'block':'none'">
-            <option value="c">Cash</option>
-            <option value="w">Wallet / محفظة</option>
-        </select>
-        <div id="wInfo" style="display:none;"><input type="tel" id="senderPh" placeholder="Transfer Phone Number"></div>
-        <button onclick="submitOrder()" style="width:100%; background:var(--gold); color:#000; border:none; padding:15px; border-radius:10px; font-weight:900; margin-top:10px;">CONFIRM ORDER</button>
-        <button onclick="closeModals()" style="width:100%; background:none; border:none; color:gray; margin-top:10px;">Cancel</button>
+<div class="modal-overlay" id="dataModal">
+    <div class="modal-box">
+        <h2>أكمل طلبك</h2>
+        <input type="text" id="custName" placeholder="اكتب اسمك هنا">
+        <input type="number" id="tabNo" placeholder="رقم الطاولة">
+        <button onclick="finishOrder()" style="width:100%; background:var(--gold); padding:18px; border:none; border-radius:15px; font-weight:900; font-size:1.1rem; color:#000;">إرسال الأوردر للبار 🚀</button>
+        <button onclick="showOrderForm(false)" style="background:none; border:none; color:gray; margin-top:15px; display:block; width:100%;">رجوع</button>
     </div>
 </div>
 
@@ -99,95 +101,118 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // المنيو الكامل من الصور
-    const menu = {
-        "HOT": [{n:"Espresso", p:50}, {n:"Americano", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70}, {n:"Flat White", p:80}, {n:"Cappuccino", p:95}, {n:"Latte", p:90}, {n:"Mocha", p:100}, {n:"White Mocha", p:100}, {n:"Spanish Latte", p:100}, {n:"Hot Chocolate", p:80}, {n:"Turkish Coffee", p:40}, {n:"English Tea", p:25}],
-        "ICED": [{n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, {n:"Iced Salted Caramel", p:110}, {n:"Iced Caramel Macchiato", p:100}, {n:"Iced Mocha", p:110}],
-        "MATCHA": [{n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Creme Caramel", p:120}, {n:"Matcha Cherry", p:120}],
-        "DESSERTS": [{n:"Mango Cheesecake", p:85}, {n:"Lemon Cheesecake", p:85}, {n:"Apple Cheesecake", p:85}, {n:"Coffee Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"Red Velvet", p:85}],
-        "CROISSANT": [{n:"Plain Croissant", p:60}, {n:"Almond Croissant", p:85}, {n:"Pistachio Croissant", p:85}, {n:"Creme Brulee Danish", p:85}],
-        "SODA": [{n:"Mojito Classic", p:75}, {n:"Strawberry Mojito", p:85}, {n:"Pink Lemonade", p:85}, {n:"Blue Lagoon", p:85}, {n:"Passion Fizz", p:90}]
+    // المنيو المتكامل بناءً على صورك
+    const fullMenu = {
+        "ARABIC": [
+            {n:"دلة قهوة سعودي", p:20}, {n:"دلة كرك", p:25}, {n:"شاي إنجليزي", p:15}, {n:"شاي أخضر", p:15}, 
+            {n:"شاي مغربي", p:20}, {n:"حليب زنجبيل", p:20}, {n:"دلة حليب بالهيل", p:25}
+        ],
+        "HOT": [
+            {n:"Espresso", p:50}, {n:"Americano", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70}, 
+            {n:"Flat White", p:80}, {n:"Cappuccino", p:85}, {n:"Latte", p:90}, {n:"Mocha", p:100},
+            {n:"Spanish Latte", p:100}, {n:"Turkish Coffee", p:40}
+        ],
+        "ICED": [
+            {n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, 
+            {n:"Iced Salted Caramel", p:110}, {n:"Iced Mocha", p:110}
+        ],
+        "MATCHA": [
+            {n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Cherry", p:120}
+        ],
+        "SPECIALTY": [
+            {n:"V60 Specialty", p:120}, {n:"Chemex", p:130}, {n:"Cold Brew", p:110}
+        ],
+        "DESSERTS": [
+            {n:"Mango Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"Red Velvet", p:85}, {n:"San Sebastian", p:95}
+        ],
+        "CROISSANT": [
+            {n:"Plain Croissant", p:60}, {n:"Almond Croissant", p:85}, {n:"Pistachio Croissant", p:85}, {n:"Chocolate Croissant", p:75}
+        ],
+        "SODA": [
+            {n:"Mojito Classic", p:75}, {n:"Strawberry Mojito", p:85}, {n:"Blue Lagoon", p:85}, {n:"Passion Fruit Soda", p:90}
+        ]
     };
 
     let cart = [];
 
-    function toast(t) {
-        const e = document.getElementById('toast'); e.innerText = t; e.style.display = 'block';
-        setTimeout(()=>e.style.display='none', 2500);
-    }
-
-    function tab(t) {
-        document.getElementById('mainView').style.display = t==='main'?'grid':'none';
-        document.getElementById('historyView').style.display = t==='history'?'block':'none';
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('btnMain').className = t==='main'?'nav-item active':'nav-item';
-        document.getElementById('btnHistory').className = t==='history'?'nav-item active':'nav-item';
-        if(t==='history') loadHistory();
-    }
-
-    function openCat(c) {
-        document.getElementById('mainView').style.display = 'none';
+    function openCategory(cat) {
+        document.getElementById('gridSection').style.display = 'none';
         document.getElementById('menuView').style.display = 'block';
         const container = document.getElementById('itemsContainer');
-        container.innerHTML = menu[c].map(i => `
-            <div class="product-card">
-                <div class="info"><b>${i.n}</b><span>${i.p} EGP</span></div>
-                <button class="add-btn" onclick="addToCart('${i.n}', ${i.p})">ADD</button>
-            </div>`).join('');
+        container.innerHTML = fullMenu[cat].map(item => `
+            <div class="item-card">
+                <div class="item-info"><b>${item.n}</b><span>${item.p} EGP</span></div>
+                <button class="add-btn" onclick="addToCart('${item.n}', ${item.p})">إضافة +</button>
+            </div>
+        `).join('');
     }
 
     function addToCart(n, p) {
         cart.push({n, p});
-        document.getElementById('cartBar').style.display = 'block';
-        document.getElementById('count').innerText = cart.length;
-        toast("Added ✅");
+        document.getElementById('cartStrip').style.display = 'block';
+        document.getElementById('cartQty').innerText = cart.length;
     }
 
-    function openOrderModal() { document.getElementById('orderModal').style.display = 'flex'; }
-    function closeModals() { document.getElementById('orderModal').style.display = 'none'; }
+    function backToMain() {
+        document.getElementById('menuView').style.display = 'none';
+        document.getElementById('gridSection').style.display = 'grid';
+    }
 
-    function submitOrder() {
-        const name = document.getElementById('custName').value, table = document.getElementById('tabNum').value;
-        if(!name || !table) return toast("Missing Info! ⚠️");
+    function showOrderForm(show) {
+        document.getElementById('dataModal').style.display = show ? 'flex' : 'none';
+    }
 
-        const order = {
+    function finishOrder() {
+        const name = document.getElementById('custName').value;
+        const table = document.getElementById('tabNo').value;
+        if(!name || !table) return alert("يا بطل، اكتب اسمك ورقم الطاولة عشان نعرف نوصلك!");
+
+        const orderData = {
             customer: name, table: table, items: cart,
-            total: cart.reduce((s,i)=>s+i.p, 0), status: "قيد الانتظار ⏳",
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+            total: cart.reduce((sum, item) => sum + item.p, 0),
+            status: "قيد الانتظار ⏳",
+            time: new Date().toLocaleTimeString('ar-EG')
         };
 
-        const ref = db.ref('orders').push();
-        ref.set(order).then(() => {
-            let ids = JSON.parse(localStorage.getItem('millionIds') || "[]");
-            ids.push(ref.key);
-            localStorage.setItem('millionIds', JSON.stringify(ids));
+        const pushRef = db.ref('orders').push();
+        pushRef.set(orderData).then(() => {
+            let localOrders = JSON.parse(localStorage.getItem('millionHistory') || "[]");
+            localOrders.push(pushRef.key);
+            localStorage.setItem('millionHistory', JSON.stringify(localOrders));
+            
+            alert("طلبك وصل للبار! 🚀");
             cart = [];
-            document.getElementById('cartBar').style.display = 'none';
-            closeModals();
-            toast("Order Sent! 🚀");
-            tab('history');
+            document.getElementById('cartStrip').style.display = 'none';
+            showOrderForm(false);
+            changeView('history');
         });
     }
 
-    function loadHistory() {
-        const list = document.getElementById('historyList');
-        list.innerHTML = '';
-        const ids = JSON.parse(localStorage.getItem('millionIds') || "[]");
-        ids.reverse().forEach(id => {
-            db.ref('orders/'+id).on('value', s => {
-                const o = s.val(); if(!o) return;
-                list.innerHTML += `<div style="background:#1a1a1a; padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #333;">
-                    <span style="color:var(--gold); font-weight:bold;">${o.status}</span><br>
-                    <b>Total: ${o.total} EGP</b><br>
-                    ${o.status.includes('⏳') ? `<button onclick="cancelReq('${id}')" style="color:red; background:none; border:none; margin-top:5px;">Cancel Order</button>` : ''}
-                </div>`;
+    function changeView(v) {
+        document.getElementById('gridSection').style.display = v==='menu'?'grid':'none';
+        document.getElementById('historyView').style.display = v==='history'?'block':'none';
+        document.getElementById('menuView').style.display = 'none';
+        document.getElementById('tabMenu').className = v==='menu'?'tab active':'tab';
+        document.getElementById('tabHistory').className = v==='history'?'tab active':'tab';
+        if(v==='history') renderHistory();
+    }
+
+    function renderHistory() {
+        const cont = document.getElementById('ordersContainer');
+        cont.innerHTML = '';
+        const savedIds = JSON.parse(localStorage.getItem('millionHistory') || "[]");
+        savedIds.reverse().forEach(id => {
+            db.ref('orders/' + id).on('value', snap => {
+                const o = snap.val(); if(!o) return;
+                cont.innerHTML += `
+                    <div style="background:#1a1a1a; padding:15px; border-radius:15px; margin-bottom:10px; border-right:4px solid var(--gold);">
+                        <b style="color:var(--gold);">${o.status}</b><br>
+                        أوردر بـ ${o.total} EGP - طاولة ${o.table}
+                        <p style="font-size:0.8rem; color:gray;">${o.time}</p>
+                    </div>
+                `;
             });
         });
-    }
-
-    function cancelReq(id) {
-        db.ref('orders/'+id).update({status: "طلب إلغاء معلق ⚠️"});
-        toast("Cancel Request Sent! ⚠️");
     }
 </script>
 </body>
