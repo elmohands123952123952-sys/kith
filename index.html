@@ -2,89 +2,81 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>One Million Café System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>One Million Café | Official Menu</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #d4af37; --bg: #050505; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; }
-        body { background: var(--bg); color: #fff; padding-bottom: 120px; -webkit-user-select: none; }
+        :root { --gold: #d4af37; --bg: #050505; --card: #121212; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; scroll-behavior: smooth; }
+        body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 100px; }
         
-        /* منع الزوم */
-        input { font-size: 16px !important; }
+        header { padding: 30px; text-align: center; background: #000; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); }
 
-        header { padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); background: #000; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
+        /* شريط التنقل السريع */
+        .quick-nav { display: flex; overflow-x: auto; background: #111; padding: 10px; sticky; top: 85px; z-index: 999; gap: 10px; border-bottom: 1px solid #222; }
+        .quick-nav a { white-space: nowrap; background: #222; color: #fff; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; border: 1px solid #333; }
+        .quick-nav a:active { background: var(--gold); color: #000; }
 
-        .tabs { display: flex; background: #111; border-bottom: 1px solid #222; }
-        .tab { flex: 1; padding: 15px; text-align: center; color: #555; font-weight: 900; cursor: pointer; }
-        .tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212,175,55,0.1); }
+        /* الأقسام */
+        .section-title { padding: 20px; background: rgba(212, 175, 55, 0.1); color: var(--gold); font-size: 1.5rem; font-weight: 900; border-right: 5px solid var(--gold); margin: 20px 0 10px; }
+        .items-container { padding: 0 15px; }
+        
+        .item-card { 
+            background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;
+        }
+        .item-info b { display: block; font-size: 1.1rem; color: #fff; }
+        .item-info span { color: var(--gold); font-weight: 900; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; }
 
-        /* شبكة الأقسام */
-        #grid-view { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .cat-card { height: 130px; border-radius: 15px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
-        .cat-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-        .cat-card h3 { position: relative; z-index: 2; font-size: 1rem; font-weight: 900; text-shadow: 2px 2px 5px #000; }
+        /* زر السلة والبيانات */
+        .cart-footer { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; z-index: 2000; display: none; }
+        
+        /* مودال البيانات */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal-box { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--gold); }
+        input { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 10px; text-align: center; }
 
-        /* القائمة */
-        #menu-view { display: none; padding: 15px; }
-        .product { background: #111; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
-        .product b { display: block; font-size: 0.9rem; }
-        .product span { color: var(--gold); font-weight: 900; }
-        .add-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 900; }
-
-        /* سجل الطلبات (دائم) */
-        .history-card { background: #111; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-right: 4px solid var(--gold); position: relative; }
-        .status-label { font-size: 0.8rem; padding: 2px 8px; border-radius: 5px; background: #222; color: var(--gold); margin-bottom: 5px; display: inline-block; }
-
-        /* المودال */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 90%; border: 1px solid var(--gold); }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; text-align: center; }
-
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; z-index: 2000; cursor: pointer; }
+        /* سجل الطلبات */
+        .history-btn { position: fixed; bottom: 80px; left: 20px; background: #222; color: var(--gold); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--gold); z-index: 1000; font-weight: bold; }
+        #history-view { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; padding: 20px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
 <header><div class="logo">ONE MILLION</div></header>
 
-<div class="tabs">
-    <div class="tab active" id="t1" onclick="showTab('menu')">المنيو</div>
-    <div class="tab" id="t2" onclick="showTab('orders')">طلباتي</div>
+<div class="quick-nav">
+    <a href="#HOT">HOT DRINKS</a>
+    <a href="#ICED">ICED DRINKS</a>
+    <a href="#ARABIC">القهوة العربية</a>
+    <a href="#MATCHA">MATCHA</a>
+    <a href="#DESSERTS">DESSERTS</a>
+    <a href="#CROISSANT">CROISSANT</a>
+    <a href="#SODA">MOJITO</a>
 </div>
 
-<div id="grid-view">
-    <div class="cat-card" onclick="openCat('ARABIC')"><img src="https://bit.ly/3LzV2yZ"><h3>القهوة العربية والشاي</h3></div>
-    <div class="cat-card" onclick="openCat('HOT')"><img src="https://bit.ly/463IunB"><h3>HOT DRINKS</h3></div>
-    <div class="cat-card" onclick="openCat('ICED')"><img src="https://bit.ly/4f3rW1A"><h3>ICED DRINKS</h3></div>
-    <div class="cat-card" onclick="openCat('MATCHA')"><img src="https://bit.ly/3zS6b2u"><h3>MATCHA</h3></div>
-    <div class="cat-card" onclick="openCat('DESSERTS')"><img src="https://bit.ly/3WptXv5"><h3>DESSERTS</h3></div>
-    <div class="cat-card" onclick="openCat('CROISSANT')"><img src="https://bit.ly/4da8uD2"><h3>CROISSANT</h3></div>
-    <div class="cat-card" onclick="openCat('SODA')"><img src="https://bit.ly/3Wk6PZ8"><h3>ITALIAN SODA</h3></div>
-</div>
+<div id="menu-content"></div>
 
-<div id="menu-view">
-    <button onclick="goBack()" style="color:var(--gold); background:none; border:none; margin-bottom:15px;">← العودة</button>
-    <div id="items-list"></div>
-</div>
+<button class="history-btn" onclick="toggleHistory(true)">طلباتي السابقة 📋</button>
 
-<div id="history-view" style="display:none; padding:15px;">
-    <h3 style="color:var(--gold); margin-bottom:15px;">سجل طلباتك (محفوظ دائماً)</h3>
+<div id="history-view">
+    <button onclick="toggleHistory(false)" style="color:var(--gold); background:none; border:none; margin-bottom:20px; font-weight:bold;">← إغلاق السجل</button>
     <div id="history-list"></div>
 </div>
 
-<div class="cart-bar" id="cart-bar" style="display:none;" onclick="openModal()">إرسال الطلب (<span id="count">0</span>)</div>
+<div class="cart-footer" id="cart-bar" onclick="openOrderModal()">تأكيد الطلب (<span id="cart-qty">0</span>)</div>
 
 <div class="modal" id="order-modal">
-    <div class="modal-content">
-        <h2 style="color:var(--gold); text-align:center;">بياناتك</h2>
-        <input type="text" id="uname" placeholder="الاسم">
-        <input type="number" id="utable" placeholder="رقم الطاولة">
-        <button onclick="confirmOrder()" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:10px; font-weight:900; margin-top:10px;">إرسال للبار</button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:10px;">إلغاء</button>
+    <div class="modal-box">
+        <h2 style="color:var(--gold); text-align:center;">بيانات الأوردر</h2>
+        <input type="text" id="cust-name" placeholder="اسمك">
+        <input type="number" id="cust-table" placeholder="رقم الطاولة">
+        <button onclick="submitOrder()" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:10px; font-weight:900; margin-top:10px;">إرسال للبار 🚀</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:gray; margin-top:10px;">رجوع</button>
     </div>
 </div>
 
@@ -93,25 +85,25 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // المنيو الكامل بناءً على تفريغ كل صورك
-    const menuData = {
-        "ARABIC": [
-            {n:"دلة قهوة سعودي (صغير)", p:20}, {n:"دلة قهوة سعودي (كبير)", p:35}, {n:"دلة كرك (صغير)", p:25}, {n:"دلة كرك (كبير)", p:40},
-            {n:"شاي إنجليزي", p:15}, {n:"شاي أخضر", p:15}, {n:"شاي بالنعناع", p:20}, {n:"حليب زنجبيل", p:20}, {n:"دلة حليب بالهيل", p:25}
-        ],
+    const menu = {
         "HOT": [
-            {n:"Espresso", p:50}, {n:"Double Espresso", p:65}, {n:"Americano (L)", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70},
-            {n:"Flat White", p:80}, {n:"Cappuccino (L)", p:85}, {n:"Latte (L)", p:90}, {n:"Mocha (L)", p:100}, {n:"Spanish Latte (L)", p:100},
-            {n:"Turkish Coffee (S)", p:40}, {n:"Turkish Coffee (D)", p:55}, {n:"French Coffee", p:60}
+            {n:"Espresso", p:50}, {n:"Double Espresso", p:65}, {n:"Americano", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70}, 
+            {n:"Flat White", p:80}, {n:"Cappuccino (L)", p:95}, {n:"Latte (L)", p:90}, {n:"Mocha (L)", p:100},
+            {n:"Spanish Latte (L)", p:110}, {n:"V60 (Hot)", p:120}, {n:"Turkish Coffee (S)", p:40}, {n:"Turkish Coffee (D)", p:55}
         ],
         "ICED": [
-            {n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, {n:"Iced Mocha", p:110}, {n:"Iced Salted Caramel", p:110}
+            {n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, 
+            {n:"Iced Mocha", p:110}, {n:"Iced White Mocha", p:100}, {n:"V60 (Iced)", p:120}
+        ],
+        "ARABIC": [
+            {n:"دلة قهوة سعودي (S)", p:20}, {n:"دلة قهوة سعودي (L)", p:35}, {n:"دلة كرك (S)", p:25}, {n:"دلة كرك (L)", p:40},
+            {n:"شاي إنجليزي", p:15}, {n:"شاي أخضر", p:15}, {n:"شاي بالنعناع", p:20}, {n:"حليب زنجبيل", p:20}
         ],
         "MATCHA": [
-            {n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Creme Caramel", p:120}
+            {n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Cherry", p:120}
         ],
         "DESSERTS": [
-            {n:"Mango Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"Red Velvet", p:85}, {n:"San Sebastian", p:95}
+            {n:"Mango Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"San Sebastian", p:95}, {n:"Red Velvet", p:85}
         ],
         "CROISSANT": [
             {n:"Plain Croissant", p:60}, {n:"Almond Croissant", p:85}, {n:"Pistachio Croissant", p:85}, {n:"Chocolate Croissant", p:75}
@@ -123,67 +115,61 @@
 
     let cart = [];
 
-    function openCat(c) {
-        document.getElementById('grid-view').style.display = 'none';
-        document.getElementById('menu-view').style.display = 'block';
-        document.getElementById('items-list').innerHTML = menuData[c].map(i => `
-            <div class="product">
-                <div class="info"><b>${i.n}</b><span>${i.p} EGP</span></div>
-                <button class="add-btn" onclick="add('${i.n}', ${i.p})">إضافة</button>
-            </div>
-        `).join('');
+    // بناء المنيو تحت بعضه
+    const content = document.getElementById('menu-content');
+    for (let section in menu) {
+        let sectionHtml = `<div class="section-title" id="${section}">${section}</div><div class="items-container">`;
+        menu[section].forEach(item => {
+            sectionHtml += `
+                <div class="item-card">
+                    <div class="item-info"><b>${item.n}</b><span>${item.p} EGP</span></div>
+                    <button class="add-btn" onclick="addToCart('${item.n}', ${item.p})">Add +</button>
+                </div>`;
+        });
+        sectionHtml += `</div>`;
+        content.innerHTML += sectionHtml;
     }
 
-    function add(n, p) {
+    function addToCart(n, p) {
         cart.push({n, p});
         document.getElementById('cart-bar').style.display = 'block';
-        document.getElementById('count').innerText = cart.length;
+        document.getElementById('cart-qty').innerText = cart.length;
     }
 
-    function goBack() {
-        document.getElementById('menu-view').style.display = 'none';
-        document.getElementById('grid-view').style.display = 'grid';
-    }
-
-    function showTab(t) {
-        document.getElementById('grid-view').style.display = t==='menu'?'grid':'none';
-        document.getElementById('history-view').style.display = t==='orders'?'block':'none';
-        document.getElementById('menu-view').style.display = 'none';
-        document.getElementById('t1').className = t==='menu'?'tab active':'tab';
-        document.getElementById('t2').className = t==='orders'?'tab active':'tab';
-        if(t==='orders') loadHistory();
-    }
-
-    function openModal() { document.getElementById('order-modal').style.display = 'flex'; }
+    function openOrderModal() { document.getElementById('order-modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('order-modal').style.display = 'none'; }
 
-    function confirmOrder() {
-        const n = document.getElementById('uname').value, t = document.getElementById('utable').value;
-        if(!n || !t) return alert("اكتب الاسم والتربيزة!");
+    function submitOrder() {
+        const name = document.getElementById('cust-name').value;
+        const table = document.getElementById('cust-table').value;
+        if(!name || !table) return alert("الاسم والتربيزة يا بطل!");
 
-        const order = { customer: n, table: t, items: cart, total: cart.reduce((a,b)=>a+b.p,0), status: "قيد الانتظار ⏳", time: new Date().toLocaleString('ar-EG') };
+        const order = { customer: name, table: table, items: cart, total: cart.reduce((a,b)=>a+b.p,0), status: "قيد الانتظار ⏳", time: new Date().toLocaleString('ar-EG') };
         const ref = db.ref('orders').push();
         ref.set(order).then(() => {
-            // حفظ السجل في ذاكرة الجهاز للأبد
-            let history = JSON.parse(localStorage.getItem('cafe_history') || "[]");
+            let history = JSON.parse(localStorage.getItem('my_orders_million') || "[]");
             history.push(ref.key);
-            localStorage.setItem('cafe_history', JSON.stringify(history));
-            
+            localStorage.setItem('my_orders_million', JSON.stringify(history));
             cart = []; document.getElementById('cart-bar').style.display = 'none';
-            closeModal(); showTab('orders');
+            closeModal(); alert("أوردرك وصل للبار! 🚀");
         });
     }
 
-    function loadHistory() {
-        const list = document.getElementById('history-list'); list.innerHTML = '';
-        const history = JSON.parse(localStorage.getItem('cafe_history') || "[]");
+    function toggleHistory(show) {
+        document.getElementById('history-view').style.display = show ? 'block' : 'none';
+        if(show) renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('my_orders_million') || "[]");
         history.reverse().forEach(id => {
             db.ref('orders/' + id).on('value', snap => {
                 const o = snap.val(); if(!o) return;
-                list.innerHTML += `<div class="history-card">
-                    <span class="status-label">${o.status}</span><br>
-                    <b>إجمالي: ${o.total} EGP</b><br>
-                    <small style="color:gray;">${o.time}</small>
+                list.innerHTML += `<div style="background:#111; padding:15px; border-radius:12px; margin-bottom:10px; border-right:4px solid var(--gold);">
+                    <b style="color:var(--gold);">${o.status}</b><br>
+                    مجموع: ${o.total} EGP<br><small>${o.time}</small>
                 </div>`;
             });
         });
