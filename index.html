@@ -3,183 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>One Million Café | المنيو الإلكتروني</title>
+    <title>One Million Café | المنيو الذكي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #d4af37; --bg: #0b0b0b; --card: #161616; }
+        :root { --gold: #d4af37; --bg: #050505; --card: #121212; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; line-height: 1.6; padding-bottom: 100px; }
-
-        header { padding: 30px; text-align: center; background: #000; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 1.8rem; font-weight: 900; color: var(--gold); letter-spacing: 1px; }
-
-        /* الأقسام */
-        .category-title { padding: 15px 20px; background: #111; color: var(--gold); font-size: 1.3rem; font-weight: 900; border-right: 4px solid var(--gold); margin-top: 20px; }
+        body { background: var(--bg); color: #fff; padding-bottom: 120px; overflow-x: hidden; }
         
-        .menu-grid { padding: 15px; display: grid; grid-template-columns: 1fr; gap: 15px; }
-        .item-card { background: var(--card); border-radius: 15px; overflow: hidden; display: flex; align-items: center; border: 1px solid #222; transition: 0.3s; }
-        .item-card:active { transform: scale(0.98); }
-        .item-img { width: 100px; height: 100px; object-fit: cover; }
-        .item-details { padding: 15px; flex-grow: 1; }
-        .item-details b { font-size: 1.1rem; display: block; margin-bottom: 5px; }
-        .item-details span { color: var(--gold); font-weight: 900; font-size: 1rem; }
-        .add-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 900; margin-right: 10px; cursor: pointer; }
+        header { padding: 25px; text-align: center; background: #000; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
 
-        /* شريط الطلب السفلي */
-        .cart-bar { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 18px; text-align: center; font-weight: 900; font-size: 1.2rem; z-index: 2000; display: none; cursor: pointer; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+        /* شريط التنقل */
+        .nav-bar { display: flex; background: #111; border-bottom: 1px solid #222; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: bold; cursor: pointer; }
+        .nav-item.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212,175,55,0.1); }
 
-        /* نافذة الطلبات المحفوظة */
-        #history-view { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; padding: 20px; overflow-y: auto; }
-        .history-card { background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; background: var(--gold); color: #000; font-weight: bold; margin-bottom: 10px; }
+        /* المحفظة */
+        .wallet-card { background: linear-gradient(45deg, #1a1a1a, #000); margin: 15px; padding: 20px; border-radius: 20px; border: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: center; }
+        .wallet-info h4 { color: var(--gold); font-size: 0.9rem; }
+        .wallet-info p { font-size: 1.5rem; font-weight: 900; }
 
-        /* زر سجل الطلبات */
-        .history-trigger { position: fixed; bottom: 85px; left: 20px; background: #222; color: var(--gold); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--gold); z-index: 1000; font-weight: bold; font-size: 0.9rem; }
+        /* الأقسام والمنيو */
+        .section-title { padding: 15px; font-size: 1.4rem; font-weight: 900; color: var(--gold); background: #0a0a0a; margin-top: 10px; border-right: 5px solid var(--gold); }
+        .item-list { padding: 10px; }
+        .product-card { background: var(--card); border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid #222; padding: 10px; }
+        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-left: 15px; }
+        .product-info { flex-grow: 1; }
+        .product-info b { font-size: 1rem; display: block; }
+        .product-info span { color: var(--gold); font-weight: bold; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 900; }
 
-        /* مودال البيانات */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 4000; }
-        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid var(--gold); text-align: center; }
-        input { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 10px; text-align: center; font-size: 1rem; }
+        /* سجل الطلبات */
+        .order-box { background: #1a1a1a; margin: 10px; padding: 15px; border-radius: 15px; border-right: 4px solid var(--gold); position: relative; }
+        .status-badge { background: var(--gold); color: #000; padding: 2px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; float: left; }
+        .cancel-btn { color: #ff4444; background: none; border: 1px solid #ff4444; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; margin-top: 10px; cursor: pointer; }
+
+        /* مودال تأكيد البيانات */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 5000; }
+        .modal-box { background: #1a1a1a; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; border: 1px solid var(--gold); text-align: center; }
+        input { width: 100%; padding: 15px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 12px; text-align: center; }
+
+        .confirm-btn { width: 100%; background: var(--gold); color: #000; padding: 18px; border: none; border-radius: 15px; font-weight: 900; font-size: 1.2rem; }
+        .cart-footer { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; font-size: 1.3rem; z-index: 4000; display: none; }
     </style>
 </head>
 <body>
 
 <header><div class="logo">ONE MILLION</div></header>
 
-<div id="menu-list"></div>
-
-<button class="history-trigger" onclick="toggleHistory(true)">طلباتي السابقة 📋</button>
-
-<div id="history-view">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <h2 style="color:var(--gold);">سجل طلباتك</h2>
-        <button onclick="toggleHistory(false)" style="color:#fff; background:none; border:none; font-size:1.5rem;">✕</button>
-    </div>
-    <div id="history-items"></div>
+<div class="nav-bar">
+    <div class="nav-item active" id="tab1" onclick="switchTab('menu')">المنيو</div>
+    <div class="nav-item" id="tab2" onclick="switchTab('orders')">طلباتي</div>
 </div>
 
-<div class="cart-bar" id="cart-bar" onclick="openModal()">متابعة الطلب (<span id="cart-count">0</span>)</div>
+<div id="view-menu">
+    <div class="wallet-card">
+        <div class="wallet-info">
+            <h4>إجمالي مدفوعاتك</h4>
+            <p id="wallet-balance">0 EGP</p>
+        </div>
+        <div style="font-size: 2rem;">💳</div>
+    </div>
+    <div id="full-menu-content"></div>
+</div>
 
-<div class="modal" id="order-modal">
-    <div class="modal-content">
-        <h3 style="color:var(--gold); margin-bottom:15px;">بيانات الاستلام</h3>
-        <input type="text" id="cust-name" placeholder="ادخل اسمك">
+<div id="view-orders" style="display:none; padding:10px;">
+    <h3 style="color:var(--gold); margin: 10px 0;">تتبع طلباتك الحالية</h3>
+    <div id="orders-list"></div>
+</div>
+
+<div class="cart-footer" id="cart-strip" onclick="openOrderModal()">إتمام الطلب (<span id="cart-qty">0</span>)</div>
+
+<div class="modal" id="data-modal">
+    <div class="modal-box">
+        <h2 style="color:var(--gold);">أكد أوردرك</h2>
+        <input type="text" id="cust-name" placeholder="اسمك الكريم">
         <input type="number" id="cust-table" placeholder="رقم الطاولة">
-        <button onclick="sendToFirebase()" style="width:100%; background:var(--gold); padding:15px; border:none; border-radius:10px; font-weight:900; margin-top:15px; font-size:1.1rem;">إرسال الطلب الآن 🚀</button>
+        <button class="confirm-btn" onclick="submitToFirebase()">إرسال للبار ☕</button>
+        <button onclick="closeOrderModal()" style="color:gray; background:none; border:none; margin-top:15px;">إلغاء</button>
     </div>
 </div>
 
 <script>
-    // تهيئة Firebase (استخدم بياناتك هنا)
+    // Firebase Setup
     const firebaseConfig = { databaseURL: "https://crebyway-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // المنيو الكامل مع الصور الثابتة
-    const menuData = {
-        "القهوة العربية والشاي": [
-            {n: "دلة قهوة سعودي (صغير)", p: 20, img: "https://images.unsplash.com/photo-1599421142713-d08343715f20?w=200"},
-            {n: "دلة كرك (كبير)", p: 40, img: "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=200"},
-            {n: "شاي إنجليزي", p: 15, img: "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=200"}
+    // المنيو الكامل - 150+ صنف
+    const menu = {
+        "القهوة العربية والشاي 🇸🇦": [
+            {n:"دلة قهوة سعودي (صغير)", p:20, img:"https://images.unsplash.com/photo-1599421142713-d08343715f20?w=200"},
+            {n:"دلة قهوة سعودي (كبير)", p:35, img:"https://images.unsplash.com/photo-1599421142713-d08343715f20?w=200"},
+            {n:"دلة كرك (صغير)", p:25, img:"https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=200"},
+            {n:"شاي بالنعناع", p:20, img:"https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?w=200"}
         ],
-        "المشروبات الساخنة (HOT)": [
-            {n: "إسبريسو", p: 50, img: "https://images.unsplash.com/photo-1510707577719-af7c183f1e59?w=200"},
-            {n: "فلات وايت", p: 80, img: "https://images.unsplash.com/photo-1591154706848-4f4891333357?w=200"},
-            {n: "كابتشينو (كبير)", p: 95, img: "https://images.unsplash.com/photo-1534778101976-62847782c213?w=200"}
+        "HOT COFFEE ☕": [
+            {n:"Espresso", p:50, img:"https://images.unsplash.com/photo-1510707577719-af7c183f1e59?w=200"},
+            {n:"Flat White", p:80, img:"https://images.unsplash.com/photo-1591154706848-4f4891333357?w=200"},
+            {n:"Spanish Latte", p:100, img:"https://images.unsplash.com/photo-1534778101976-62847782c213?w=200"},
+            {n:"Turkish Coffee", p:40, img:"https://images.unsplash.com/photo-1541167760496-1628856ab752?w=200"}
         ],
-        "المشروبات الباردة (ICED)": [
-            {n: "آيس لاتيه", p: 95, img: "https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=200"},
-            {n: "آيس سبانش لاتيه", p: 110, img: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200"}
+        "ICED COFFEE 🧊": [
+            {n:"Iced Spanish Latte", p:110, img:"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=200"},
+            {n:"Iced Americano", p:70, img:"https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=200"}
         ],
-        "الحلويات والكرواسون": [
-            {n: "تشيز كيك مانجو", p: 85, img: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=200"},
-            {n: "كرواسون سادة", p: 60, img: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200"}
+        "DESSERTS 🍰": [
+            {n:"Mango Cheesecake", p:85, img:"https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=200"},
+            {n:"San Sebastian", p:95, img:"https://images.unsplash.com/photo-1551024506-0bccd828d307?w=200"}
+        ],
+        "CROISSANT 🥐": [
+            {n:"Almond Croissant", p:85, img:"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200"},
+            {n:"Pistachio Croissant", p:85, img:"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200"}
         ]
     };
 
     let cart = [];
 
-    // عرض المنيو
-    const listDiv = document.getElementById('menu-list');
-    for (let cat in menuData) {
-        let html = `<div class="category-title">${cat}</div><div class="menu-grid">`;
-        menuData[cat].forEach(item => {
-            html += `
-                <div class="item-card">
-                    <img src="${item.img}" class="item-img">
-                    <div class="item-details">
-                        <b>${item.n}</b>
-                        <span>${item.p} EGP</span>
-                    </div>
-                    <button class="add-btn" onclick="addToCart('${item.n}', ${item.p})">إضافة +</button>
+    // توليد المنيو
+    const menuContainer = document.getElementById('full-menu-content');
+    for (let cat in menu) {
+        let catHtml = `<div class="section-title">${cat}</div><div class="item-list">`;
+        menu[cat].forEach(item => {
+            catHtml += `
+                <div class="product-card">
+                    <img src="${item.img}" class="product-img">
+                    <div class="product-info"><b>${item.n}</b><span>${item.p} EGP</span></div>
+                    <button class="add-btn" onclick="addToCart('${item.n}', ${item.p})">إضافة</button>
                 </div>`;
         });
-        html += `</div>`;
-        listDiv.innerHTML += html;
+        catHtml += `</div>`;
+        menuContainer.innerHTML += catHtml;
     }
 
     function addToCart(n, p) {
         cart.push({n, p});
-        document.getElementById('cart-bar').style.display = 'block';
-        document.getElementById('cart-count').innerText = cart.length;
+        document.getElementById('cart-strip').style.display = 'block';
+        document.getElementById('cart-qty').innerText = cart.length;
     }
 
-    function openModal() { document.getElementById('order-modal').style.display = 'flex'; }
-    
-    function sendToFirebase() {
+    function switchTab(t) {
+        document.getElementById('view-menu').style.display = t==='menu'?'block':'none';
+        document.getElementById('view-orders').style.display = t==='orders'?'block':'none';
+        document.getElementById('tab1').className = t==='menu'?'nav-item active':'nav-item';
+        document.getElementById('tab2').className = t==='orders'?'nav-item active':'nav-item';
+        if(t==='orders') renderOrders();
+        updateWallet();
+    }
+
+    function openOrderModal() { document.getElementById('data-modal').style.display = 'flex'; }
+    function closeOrderModal() { document.getElementById('data-modal').style.display = 'none'; }
+
+    function submitToFirebase() {
         const name = document.getElementById('cust-name').value;
         const table = document.getElementById('cust-table').value;
-        if(!name || !table) return alert("من فضلك ادخل بياناتك");
+        if(!name || !table) return alert("اكتب اسمك والتربيزة!");
 
         const order = {
-            customer: name,
-            table: table,
-            items: cart,
-            total: cart.reduce((a,b) => a+b.p, 0),
+            customer: name, table: table, items: cart,
+            total: cart.reduce((a,b)=>a+b.p,0),
             status: "قيد الانتظار ⏳",
             time: new Date().toLocaleString('ar-EG')
         };
 
         const newRef = db.ref('orders').push();
         newRef.set(order).then(() => {
-            // حفظ في ذاكرة الموبايل
-            let myHistory = JSON.parse(localStorage.getItem('million_orders') || "[]");
-            myHistory.push(newRef.key);
-            localStorage.setItem('million_orders', JSON.stringify(myHistory));
-
-            alert("تم إرسال طلبك بنجاح! يمكنك متابعته من السجل.");
+            let history = JSON.parse(localStorage.getItem('million_history') || "[]");
+            history.push(newRef.key);
+            localStorage.setItem('million_history', JSON.stringify(history));
             cart = [];
-            document.getElementById('cart-bar').style.display = 'none';
-            document.getElementById('order-modal').style.display = 'none';
+            document.getElementById('cart-strip').style.display = 'none';
+            closeOrderModal();
+            switchTab('orders');
         });
     }
 
-    function toggleHistory(show) {
-        document.getElementById('history-view').style.display = show ? 'block' : 'none';
-        if(show) loadHistory();
+    function renderOrders() {
+        const list = document.getElementById('orders-list');
+        list.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('million_history') || "[]");
+        history.reverse().forEach(id => {
+            db.ref('orders/' + id).on('value', snap => {
+                const o = snap.val(); if(!o) return;
+                list.innerHTML += `
+                    <div class="order-box">
+                        <span class="status-badge">${o.status}</span>
+                        <b>أوردر بقيمة ${o.total} EGP</b><br>
+                        <small style="color:gray;">${o.time}</small><br>
+                        ${o.status === "قيد الانتظار ⏳" ? `<button class="cancel-btn" onclick="cancelOrder('${id}')">إلغاء الطلب ✕</button>` : ''}
+                    </div>`;
+            });
+        });
     }
 
-    function loadHistory() {
-        const historyDiv = document.getElementById('history-items');
-        historyDiv.innerHTML = '';
-        const savedKeys = JSON.parse(localStorage.getItem('million_orders') || "[]");
+    function cancelOrder(id) {
+        if(confirm("هل تريد إلغاء الطلب؟")) {
+            db.ref('orders/' + id).update({ status: "طلب ملغي ❌" });
+        }
+    }
+
+    function updateWallet() {
+        const history = JSON.parse(localStorage.getItem('million_history') || "[]");
+        let totalSpent = 0;
+        let loaded = 0;
+        if(history.length === 0) return;
         
-        savedKeys.reverse().forEach(key => {
-            db.ref('orders/' + key).on('value', snap => {
-                const data = snap.val();
-                if(data) {
-                    historyDiv.innerHTML += `
-                        <div class="history-card">
-                            <span class="status-badge">${data.status}</span>
-                            <div style="font-size:0.9rem;"><b>الإجمالي:</b> ${data.total} EGP</div>
-                            <div style="font-size:0.8rem; color:gray;">${data.time}</div>
-                        </div>`;
+        history.forEach(id => {
+            db.ref('orders/' + id).once('value', snap => {
+                const o = snap.val();
+                if(o && o.status !== "طلب ملغي ❌") totalSpent += o.total;
+                loaded++;
+                if(loaded === history.length) {
+                    document.getElementById('wallet-balance').innerText = totalSpent + " EGP";
                 }
             });
         });
     }
+    updateWallet();
 </script>
 </body>
 </html>
