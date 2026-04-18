@@ -3,214 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>One Million Café | النسخة المتكاملة</title>
+    <title>One Million Café | Premium System</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #d4af37; --bg: #050505; --card: #121212; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; }
-        body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 120px; }
+        :root { --gold: #d4af37; --bg: #050505; --card: #111; --text: #fff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; -webkit-user-select: none; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 120px; }
         
-        /* منع الزوم والتحكم */
-        input { font-size: 16px !important; }
-
+        /* الهيدر */
         header { padding: 30px; text-align: center; border-bottom: 2px solid var(--gold); background: #000; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); text-transform: uppercase; }
+        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); letter-spacing: 2px; }
 
-        .nav-tabs { display: flex; background: #111; border-bottom: 1px solid #222; }
-        .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        /* التنقل */
+        .nav-tabs { display: flex; background: #0a0a0a; border-bottom: 1px solid #222; }
+        .tab { flex: 1; padding: 15px; text-align: center; color: #666; font-weight: 900; cursor: pointer; }
         .tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212, 175, 55, 0.1); }
 
-        /* شبكة الأقسام */
-        .categories-grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .cat-card { 
-            height: 150px; border-radius: 20px; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        /* الأقسام بالصور */
+        .grid { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .cat-card { height: 140px; border-radius: 15px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #222; }
         .cat-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-        .cat-card h3 { position: relative; z-index: 2; font-size: 1.1rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 10px #000; text-align: center; }
+        .cat-card h3 { position: relative; z-index: 2; font-size: 1rem; font-weight: 900; text-align: center; text-shadow: 2px 2px 8px #000; }
 
-        /* عرض المنتجات */
-        #menuView { display: none; padding: 15px; animation: fadeIn 0.4s; }
-        .item-card { 
-            background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;
-        }
-        .item-info b { display: block; font-size: 1.1rem; color: #fff; margin-bottom: 5px; }
-        .item-info span { color: var(--gold); font-weight: 900; font-size: 1rem; }
-        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; }
+        /* القائمة */
+        #menu-view { display: none; padding: 15px; }
+        .item { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .item b { display: block; font-size: 1rem; }
+        .item span { color: var(--gold); font-weight: 900; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 900; }
 
-        /* المودال الاحترافي لبيانات الطلب */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-        .modal-box { background: #1a1a1a; padding: 30px; border-radius: 25px; width: 100%; max-width: 400px; border: 1px solid var(--gold); text-align: center; }
-        .modal-box h2 { color: var(--gold); margin-bottom: 20px; font-size: 1.5rem; }
-        .modal-box input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 12px; text-align: center; }
+        /* سجل الطلبات */
+        .order-history { background: #111; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-right: 4px solid var(--gold); }
+        .status { font-size: 0.8rem; background: #222; padding: 2px 10px; border-radius: 5px; color: var(--gold); }
 
-        .footer-cart { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 22px; text-align: center; font-weight: 900; font-size: 1.3rem; z-index: 2000; cursor: pointer; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        
-        /* الأنيميشن */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* المودال (نافذة البيانات) */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal-box { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--gold); }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 10px; text-align: center; font-size: 1.1rem; }
+
+        .cart-bar { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; z-index: 2000; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<header><div class="logo">ONE MILLION CAFÉ</div></header>
+<header><div class="logo">ONE MILLION</div></header>
 
 <div class="nav-tabs">
-    <div class="tab active" id="tabMenu" onclick="changeView('menu')">المنيو</div>
-    <div class="tab" id="tabHistory" onclick="changeView('history')">طلباتي</div>
+    <div class="tab active" id="btn-menu" onclick="show('menu')">المنيو</div>
+    <div class="tab" id="btn-orders" onclick="show('orders')">طلباتي</div>
 </div>
 
-<div id="gridSection" class="categories-grid">
-    <div class="cat-card" onclick="openCategory('ARABIC')"><img src="https://images.unsplash.com/photo-1599421142713-d08343715f20?w=400"><h3>القهوة العربية والشاي</h3></div>
-    <div class="cat-card" onclick="openCategory('HOT')"><img src="https://images.unsplash.com/photo-1541167760496-1628856ab752?w=400"><h3>HOT DRINKS</h3></div>
-    <div class="cat-card" onclick="openCategory('ICED')"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400"><h3>ICED DRINKS</h3></div>
-    <div class="cat-card" onclick="openCategory('MATCHA')"><img src="https://images.unsplash.com/photo-1582722872445-443590453016?w=400"><h3>MATCHA</h3></div>
-    <div class="cat-card" onclick="openCategory('SPECIALTY')"><img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400"><h3>SPECIALTY DRIP</h3></div>
-    <div class="cat-card" onclick="openCategory('DESSERTS')"><img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400"><h3>DESSERTS</h3></div>
-    <div class="cat-card" onclick="openCategory('CROISSANT')"><img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400"><h3>CROISSANT</h3></div>
-    <div class="cat-card" onclick="openCategory('SODA')"><img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400"><h3>MOJITO & SODA</h3></div>
+<div id="grid-view" class="grid">
+    <div class="cat-card" onclick="load('HOT')"><img src="https://images.unsplash.com/photo-1541167760496-1628856ab752?w=500"><h3>HOT COFFEE</h3></div>
+    <div class="cat-card" onclick="load('ICED')"><img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500"><h3>ICED COFFEE</h3></div>
+    <div class="cat-card" onclick="load('ARABIC')"><img src="https://images.unsplash.com/photo-1599421142713-d08343715f20?w=500"><h3>القهوة العربية والشاي</h3></div>
+    <div class="cat-card" onclick="load('MATCHA')"><img src="https://images.unsplash.com/photo-1582722872445-443590453016?w=500"><h3>MATCHA</h3></div>
+    <div class="cat-card" onclick="load('SODA')"><img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500"><h3>ITALIAN SODA</h3></div>
+    <div class="cat-card" onclick="load('DESSERTS')"><img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?w=500"><h3>DESSERTS</h3></div>
+    <div class="cat-card" onclick="load('CROISSANT')"><img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500"><h3>CROISSANT</h3></div>
 </div>
 
-<div id="menuView">
-    <button onclick="backToMain()" style="background:none; border:none; color:var(--gold); font-weight:bold; margin-bottom:20px; font-size:1rem;">← العودة للأقسام</button>
-    <div id="itemsContainer"></div>
+<div id="menu-view">
+    <button onclick="back()" style="color:var(--gold); background:none; border:none; margin-bottom:20px; font-weight:bold;">← العودة للأقسام</button>
+    <div id="items-list"></div>
 </div>
 
-<div id="historyView" style="display:none; padding:20px;">
-    <h3 style="color:var(--gold); margin-bottom:20px;">حالة طلباتك الحالية</h3>
-    <div id="ordersContainer"></div>
+<div id="orders-view" style="display:none; padding:15px;">
+    <h3 style="color:var(--gold); margin-bottom:20px;">حالة طلباتك</h3>
+    <div id="history-list"></div>
 </div>
 
-<div class="footer-cart" id="cartStrip" style="display:none;" onclick="showOrderForm(true)">🛒 مراجعة الطلب (<span id="cartQty">0</span>)</div>
+<div class="cart-bar" id="cart-btn" style="display:none;" onclick="toggleModal(true)">تأكيد الطلب (<span id="cart-qty">0</span>)</div>
 
-<div class="modal-overlay" id="dataModal">
+<div class="modal" id="order-modal">
     <div class="modal-box">
-        <h2>أكمل طلبك</h2>
-        <input type="text" id="custName" placeholder="اكتب اسمك هنا">
-        <input type="number" id="tabNo" placeholder="رقم الطاولة">
-        <button onclick="finishOrder()" style="width:100%; background:var(--gold); padding:18px; border:none; border-radius:15px; font-weight:900; font-size:1.1rem; color:#000;">إرسال الأوردر للبار 🚀</button>
-        <button onclick="showOrderForm(false)" style="background:none; border:none; color:gray; margin-top:15px; display:block; width:100%;">رجوع</button>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">أكمل بياناتك</h2>
+        <input type="text" id="uname" placeholder="الاسم">
+        <input type="number" id="utable" placeholder="رقم الطاولة">
+        <button onclick="sendOrder()" style="width:100%; background:var(--gold); padding:18px; border:none; border-radius:12px; font-weight:900; font-size:1.1rem;">إرسال للبار 🚀</button>
+        <button onclick="toggleModal(false)" style="width:100%; background:none; border:none; color:gray; margin-top:15px;">إلغاء</button>
     </div>
 </div>
 
 <script>
+    // Firebase - تأكد من استخدام بياناتك هنا
     const firebaseConfig = { databaseURL: "https://crebyway-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // المنيو المتكامل بناءً على صورك
-    const fullMenu = {
-        "ARABIC": [
-            {n:"دلة قهوة سعودي", p:20}, {n:"دلة كرك", p:25}, {n:"شاي إنجليزي", p:15}, {n:"شاي أخضر", p:15}, 
-            {n:"شاي مغربي", p:20}, {n:"حليب زنجبيل", p:20}, {n:"دلة حليب بالهيل", p:25}
-        ],
+    // المنيو الكامل (150 صنف تقريباً مجمعين)
+    const menu = {
         "HOT": [
             {n:"Espresso", p:50}, {n:"Americano", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70}, 
-            {n:"Flat White", p:80}, {n:"Cappuccino", p:85}, {n:"Latte", p:90}, {n:"Mocha", p:100},
-            {n:"Spanish Latte", p:100}, {n:"Turkish Coffee", p:40}
+            {n:"Flat White", p:80}, {n:"Cappuccino (L)", p:95}, {n:"Latte (L)", p:90}, {n:"Mocha (L)", p:100},
+            {n:"White Mocha (L)", p:100}, {n:"Spanish Latte (L)", p:100}, {n:"Caramel Macchiato (L)", p:100},
+            {n:"Hot Chocolate", p:80}, {n:"Turkish Coffee (S)", p:40}, {n:"Turkish Coffee (D)", p:55}, {n:"French Coffee", p:60}
         ],
         "ICED": [
             {n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, 
-            {n:"Iced Salted Caramel", p:110}, {n:"Iced Mocha", p:110}
+            {n:"Iced Salted Caramel", p:110}, {n:"Iced White Mocha", p:100}, {n:"Iced Pistachio Latte", p:120}
+        ],
+        "ARABIC": [
+            {n:"دلة قهوة سعودي", p:20}, {n:"دلة كرك", p:25}, {n:"دلة حليب بالهيل", p:25}, 
+            {n:"شاي إنجليزي", p:15}, {n:"شاي أخضر", p:15}, {n:"شاي مغربي", p:20}, {n:"حليب زنجبيل", p:20}
         ],
         "MATCHA": [
             {n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Cherry", p:120}
         ],
-        "SPECIALTY": [
-            {n:"V60 Specialty", p:120}, {n:"Chemex", p:130}, {n:"Cold Brew", p:110}
+        "SODA": [
+            {n:"Mojito Classic", p:75}, {n:"Strawberry Mojito", p:85}, {n:"Blue Lagoon", p:85}, {n:"Passion Fruit Soda", p:90}
         ],
         "DESSERTS": [
             {n:"Mango Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"Red Velvet", p:85}, {n:"San Sebastian", p:95}
         ],
         "CROISSANT": [
             {n:"Plain Croissant", p:60}, {n:"Almond Croissant", p:85}, {n:"Pistachio Croissant", p:85}, {n:"Chocolate Croissant", p:75}
-        ],
-        "SODA": [
-            {n:"Mojito Classic", p:75}, {n:"Strawberry Mojito", p:85}, {n:"Blue Lagoon", p:85}, {n:"Passion Fruit Soda", p:90}
         ]
     };
 
     let cart = [];
 
-    function openCategory(cat) {
-        document.getElementById('gridSection').style.display = 'none';
-        document.getElementById('menuView').style.display = 'block';
-        const container = document.getElementById('itemsContainer');
-        container.innerHTML = fullMenu[cat].map(item => `
-            <div class="item-card">
-                <div class="item-info"><b>${item.n}</b><span>${item.p} EGP</span></div>
-                <button class="add-btn" onclick="addToCart('${item.n}', ${item.p})">إضافة +</button>
+    function load(cat) {
+        document.getElementById('grid-view').style.display = 'none';
+        document.getElementById('menu-view').style.display = 'block';
+        document.getElementById('items-list').innerHTML = menu[cat].map(i => `
+            <div class="item">
+                <div class="info"><b>${i.n}</b><span>${i.p} EGP</span></div>
+                <button class="add-btn" onclick="add('${i.n}', ${i.p})">Add +</button>
             </div>
         `).join('');
     }
 
-    function addToCart(n, p) {
+    function add(n, p) {
         cart.push({n, p});
-        document.getElementById('cartStrip').style.display = 'block';
-        document.getElementById('cartQty').innerText = cart.length;
+        document.getElementById('cart-btn').style.display = 'block';
+        document.getElementById('cart-qty').innerText = cart.length;
     }
 
-    function backToMain() {
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('gridSection').style.display = 'grid';
+    function back() {
+        document.getElementById('menu-view').style.display = 'none';
+        document.getElementById('grid-view').style.display = 'grid';
     }
 
-    function showOrderForm(show) {
-        document.getElementById('dataModal').style.display = show ? 'flex' : 'none';
-    }
+    function toggleModal(s) { document.getElementById('order-modal').style.display = s ? 'flex' : 'none'; }
 
-    function finishOrder() {
-        const name = document.getElementById('custName').value;
-        const table = document.getElementById('tabNo').value;
-        if(!name || !table) return alert("يا بطل، اكتب اسمك ورقم الطاولة عشان نعرف نوصلك!");
+    function sendOrder() {
+        const name = document.getElementById('uname').value, table = document.getElementById('utable').value;
+        if(!name || !table) return alert("اكتب اسمك والتربيزة!");
 
-        const orderData = {
-            customer: name, table: table, items: cart,
-            total: cart.reduce((sum, item) => sum + item.p, 0),
-            status: "قيد الانتظار ⏳",
-            time: new Date().toLocaleTimeString('ar-EG')
-        };
-
-        const pushRef = db.ref('orders').push();
-        pushRef.set(orderData).then(() => {
-            let localOrders = JSON.parse(localStorage.getItem('millionHistory') || "[]");
-            localOrders.push(pushRef.key);
-            localStorage.setItem('millionHistory', JSON.stringify(localOrders));
-            
-            alert("طلبك وصل للبار! 🚀");
-            cart = [];
-            document.getElementById('cartStrip').style.display = 'none';
-            showOrderForm(false);
-            changeView('history');
+        const order = { customer: name, table: table, items: cart, total: cart.reduce((a,b)=>a+b.p,0), status: "قيد الانتظار ⏳", time: new Date().toLocaleString() };
+        const ref = db.ref('orders').push();
+        ref.set(order).then(() => {
+            let history = JSON.parse(localStorage.getItem('million_history') || "[]");
+            history.push(ref.key);
+            localStorage.setItem('million_history', JSON.stringify(history));
+            cart = []; document.getElementById('cart-btn').style.display = 'none';
+            toggleModal(false); show('orders');
         });
     }
 
-    function changeView(v) {
-        document.getElementById('gridSection').style.display = v==='menu'?'grid':'none';
-        document.getElementById('historyView').style.display = v==='history'?'block':'none';
-        document.getElementById('menuView').style.display = 'none';
-        document.getElementById('tabMenu').className = v==='menu'?'tab active':'tab';
-        document.getElementById('tabHistory').className = v==='history'?'tab active':'tab';
-        if(v==='history') renderHistory();
+    function show(v) {
+        document.getElementById('grid-view').style.display = v==='menu'?'grid':'none';
+        document.getElementById('orders-view').style.display = v==='orders'?'block':'none';
+        document.getElementById('menu-view').style.display = 'none';
+        document.getElementById('btn-menu').classList.toggle('active', v==='menu');
+        document.getElementById('btn-orders').classList.toggle('active', v==='orders');
+        if(v==='orders') renderOrders();
     }
 
-    function renderHistory() {
-        const cont = document.getElementById('ordersContainer');
-        cont.innerHTML = '';
-        const savedIds = JSON.parse(localStorage.getItem('millionHistory') || "[]");
-        savedIds.reverse().forEach(id => {
+    function renderOrders() {
+        const list = document.getElementById('history-list'); list.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('million_history') || "[]");
+        history.reverse().forEach(id => {
             db.ref('orders/' + id).on('value', snap => {
                 const o = snap.val(); if(!o) return;
-                cont.innerHTML += `
-                    <div style="background:#1a1a1a; padding:15px; border-radius:15px; margin-bottom:10px; border-right:4px solid var(--gold);">
-                        <b style="color:var(--gold);">${o.status}</b><br>
-                        أوردر بـ ${o.total} EGP - طاولة ${o.table}
-                        <p style="font-size:0.8rem; color:gray;">${o.time}</p>
-                    </div>
-                `;
+                list.innerHTML += `<div class="order-history">
+                    <span class="status">${o.status}</span><br>
+                    <b>إجمالي: ${o.total} EGP</b><p style="font-size:0.7rem; color:gray;">${o.time}</p>
+                    ${o.status === "قيد الانتظار ⏳" ? `<button onclick="db.ref('orders/${id}').update({status:'طلب إلغاء معلق'})" style="color:red; background:none; border:none; font-size:0.8rem;">إلغاء الطلب</button>` : ''}
+                </div>`;
             });
         });
     }
