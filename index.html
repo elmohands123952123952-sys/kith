@@ -8,200 +8,186 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --gold: #d4af37; --bg: #050505; --card: rgba(255, 255, 255, 0.05); }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; 
-            touch-action: pan-y; -webkit-user-select: none; user-select: none; }
-        
+        :root { --gold: #d4af37; --bg: #050505; --card: #111; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; touch-action: manipulation; -webkit-user-select: none; }
         body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 120px; }
         
-        /* الهيدر */
-        header { padding: 40px 20px; text-align: center; border-bottom: 1px solid var(--gold); background: #000; }
-        .logo { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: 3px; text-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+        header { padding: 30px; text-align: center; border-bottom: 2px solid var(--gold); background: #000; }
+        .logo { font-size: 2rem; font-weight: 900; color: var(--gold); letter-spacing: 2px; }
 
-        /* شريط التنقل */
-        .nav-bar { display: flex; background: #111; border-bottom: 1px solid #222; }
-        .nav-item { flex: 1; padding: 15px; text-align: center; color: #888; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(212, 175, 55, 0.05); }
+        .nav-bar { display: flex; background: #111; border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 1000; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; color: #888; font-weight: bold; cursor: pointer; }
+        .nav-item.active { color: var(--gold); border-bottom: 3px solid var(--gold); background: rgba(212, 175, 55, 0.1); }
 
-        /* الأقسام (المستطيلات الكبيرة بالصور) */
-        .categories-container { padding: 20px; display: grid; gap: 20px; }
-        .cat-box { 
-            height: 160px; border-radius: 20px; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; 
-            border: 1px solid rgba(212, 175, 55, 0.2); transition: 0.3s;
+        /* الأقسام مع الصور */
+        .categories-grid { padding: 20px; display: grid; gap: 15px; }
+        .cat-card { 
+            height: 130px; border-radius: 20px; position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; border: 1px solid #333;
         }
-        .cat-box img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
-        .cat-box:active img { transform: scale(1.1); }
-        .cat-box h3 { position: relative; z-index: 2; font-size: 2rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 10px #000; }
+        .cat-card img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+        .cat-card h3 { position: relative; z-index: 2; font-size: 1.8rem; font-weight: 900; color: #fff; text-shadow: 2px 2px 8px #000; }
 
-        /* شكل الطلبات الجديد (Premium Look) */
+        /* قائمة المنتجات */
         #menuView { display: none; padding: 20px; }
-        .product-item { 
-            background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        .product-card { 
+            background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #222;
         }
-        .product-item .info b { font-size: 1.3rem; color: #fff; display: block; text-align: left; }
-        .product-item .info span { color: var(--gold); font-weight: 900; font-size: 1.1rem; }
-        .add-btn { background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 15px; font-weight: 900; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2); }
+        .info b { font-size: 1.1rem; color: #fff; display: block; text-align: left; }
+        .info span { color: var(--gold); font-weight: 900; }
+        .add-btn { background: var(--gold); color: #000; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 900; }
 
-        /* سجل الطلبات */
-        .order-history-card { background: #111; border: 1px solid #222; border-radius: 15px; padding: 15px; margin-bottom: 10px; }
-        .status-badge { padding: 5px 15px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        /* المودال (نافذة البيانات) */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--gold); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; text-align: center; }
 
-        /* السلة والرسائل */
-        .cart-footer { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 25px; text-align: center; font-weight: 900; font-size: 1.3rem; border-radius: 30px 30px 0 0; z-index: 2000; }
-        #customMsg { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 15px 35px; border-radius: 50px; font-weight: 900; z-index: 5000; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .cart-footer { position: fixed; bottom: 0; width: 100%; background: var(--gold); color: #000; padding: 20px; text-align: center; font-weight: 900; font-size: 1.2rem; z-index: 2000; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 10px 30px; border-radius: 50px; font-weight: bold; z-index: 5000; display: none; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="customMsg"></div>
+<body>
 
-<header>
-    <div class="logo">ONE MILLION</div>
-</header>
+<div id="toast"></div>
+
+<header><div class="logo">ONE MILLION</div></header>
 
 <div class="nav-bar">
-    <div class="nav-item active" id="navMain" onclick="showTab('main')">MAIN MENU</div>
-    <div class="nav-item" id="navHistory" onclick="showTab('history')">MY ORDERS</div>
+    <div class="nav-item active" id="btnMain" onclick="tab('main')">MENU</div>
+    <div class="nav-item" id="btnHistory" onclick="tab('history')">ORDERS</div>
 </div>
 
-<div id="mainView" class="categories-container">
-    <div class="cat-box" onclick="openCat('HOT')">
-        <img src="https://images.unsplash.com/photo-1541167760496-1628856ab752?q=80&w=600">
-        <h3>HOT DRINKS</h3>
-    </div>
-    <div class="cat-box" onclick="openCat('ICED')">
-        <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=600">
-        <h3>ICED DRINKS</h3>
-    </div>
-    <div class="cat-box" onclick="openCat('MATCHA')">
-        <img src="https://images.unsplash.com/photo-1594631252845-29fc4586d517?q=80&w=600">
-        <h3>MATCHA</h3>
-    </div>
-    <div class="cat-box" onclick="openCat('DESSERTS')">
-        <img src="https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=600">
-        <h3>DESSERTS</h3>
-    </div>
+<div id="mainView" class="categories-grid">
+    <div class="cat-card" onclick="openCat('HOT')"><img src="https://bit.ly/3LzV2yZ"><h3>HOT DRINKS</h3></div>
+    <div class="cat-card" onclick="openCat('ICED')"><img src="https://bit.ly/3DsK2W1"><h3>ICED DRINKS</h3></div>
+    <div class="cat-card" onclick="openCat('MATCHA')"><img src="https://bit.ly/3BvO7r5"><h3>MATCHA</h3></div>
+    <div class="cat-card" onclick="openCat('DESSERTS')"><img src="https://bit.ly/3Rz6A1N"><h3>DESSERTS</h3></div>
+    <div class="cat-card" onclick="openCat('CROISSANT')"><img src="https://bit.ly/3S7tW2h"><h3>CROISSANT</h3></div>
+    <div class="cat-card" onclick="openCat('SODA')"><img src="https://bit.ly/3Bc8mX6"><h3>ITALIAN SODA</h3></div>
 </div>
 
 <div id="menuView">
-    <button onclick="showTab('main')" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 20px; border-radius:20px; margin-bottom:20px; font-weight:bold;">← BACK</button>
+    <button onclick="tab('main')" style="color:var(--gold); background:none; border:none; margin-bottom:15px; font-weight:bold;">← BACK</button>
     <div id="itemsContainer"></div>
 </div>
 
 <div id="historyView" style="display:none; padding:20px;">
-    <h2 style="color:var(--gold); margin-bottom:20px;">Order History</h2>
-    <div id="historyContent"></div>
+    <h2 style="color:var(--gold); margin-bottom:15px;">Order History</h2>
+    <div id="historyList"></div>
 </div>
 
-<div class="cart-footer" id="cartBar" style="display:none;" onclick="openCheckout()">🛒 VIEW ORDER (<span id="cartCount">0</span>)</div>
+<div class="cart-footer" id="cartBar" style="display:none;" onclick="openOrderModal()">🛒 CHECKOUT (<span id="count">0</span>)</div>
+
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <h3 style="text-align:center; color:var(--gold);">Order Details</h3>
+        <input type="text" id="custName" placeholder="Your Name">
+        <input type="number" id="tabNum" placeholder="Table Number">
+        <select id="pMethod" onchange="document.getElementById('wInfo').style.display=this.value==='w'?'block':'none'">
+            <option value="c">Cash</option>
+            <option value="w">Wallet / محفظة</option>
+        </select>
+        <div id="wInfo" style="display:none;"><input type="tel" id="senderPh" placeholder="Transfer Phone Number"></div>
+        <button onclick="submitOrder()" style="width:100%; background:var(--gold); color:#000; border:none; padding:15px; border-radius:10px; font-weight:900; margin-top:10px;">CONFIRM ORDER</button>
+        <button onclick="closeModals()" style="width:100%; background:none; border:none; color:gray; margin-top:10px;">Cancel</button>
+    </div>
+</div>
 
 <script>
-    // Firebase Setup
     const firebaseConfig = { databaseURL: "https://crebyway-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Data
+    // المنيو الكامل من الصور
     const menu = {
-        "HOT": [{n:"Espresso", p:50}, {n:"Americano", p:55}, {n:"Flat White", p:80}],
-        "ICED": [{n:"Iced Latte", p:95}, {n:"Spanish Latte", p:110}],
-        "MATCHA": [{n:"Matcha Mango", p:120}],
-        "DESSERTS": [{n:"Pistachio Cheesecake", p:90}]
+        "HOT": [{n:"Espresso", p:50}, {n:"Americano", p:55}, {n:"Macchiato", p:60}, {n:"Cortado", p:70}, {n:"Flat White", p:80}, {n:"Cappuccino", p:95}, {n:"Latte", p:90}, {n:"Mocha", p:100}, {n:"White Mocha", p:100}, {n:"Spanish Latte", p:100}, {n:"Hot Chocolate", p:80}, {n:"Turkish Coffee", p:40}, {n:"English Tea", p:25}],
+        "ICED": [{n:"Iced Americano", p:70}, {n:"Iced Latte", p:95}, {n:"Iced Spanish Latte", p:110}, {n:"Iced Salted Caramel", p:110}, {n:"Iced Caramel Macchiato", p:100}, {n:"Iced Mocha", p:110}],
+        "MATCHA": [{n:"Matcha Classic", p:100}, {n:"Matcha Mango", p:120}, {n:"Matcha Strawberry", p:120}, {n:"Matcha Creme Caramel", p:120}, {n:"Matcha Cherry", p:120}],
+        "DESSERTS": [{n:"Mango Cheesecake", p:85}, {n:"Lemon Cheesecake", p:85}, {n:"Apple Cheesecake", p:85}, {n:"Coffee Cheesecake", p:85}, {n:"Pistachio Cheesecake", p:90}, {n:"Red Velvet", p:85}],
+        "CROISSANT": [{n:"Plain Croissant", p:60}, {n:"Almond Croissant", p:85}, {n:"Pistachio Croissant", p:85}, {n:"Creme Brulee Danish", p:85}],
+        "SODA": [{n:"Mojito Classic", p:75}, {n:"Strawberry Mojito", p:85}, {n:"Pink Lemonade", p:85}, {n:"Blue Lagoon", p:85}, {n:"Passion Fizz", p:90}]
     };
 
     let cart = [];
 
-    function msg(t) {
-        const e = document.getElementById('customMsg'); e.innerText = t; e.style.display = 'block';
-        setTimeout(()=>e.style.display='none', 2000);
+    function toast(t) {
+        const e = document.getElementById('toast'); e.innerText = t; e.style.display = 'block';
+        setTimeout(()=>e.style.display='none', 2500);
     }
 
-    // منع الزوم واللمس المتكرر برمجياً
-    document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-
-    function showTab(tab) {
-        document.getElementById('mainView').style.display = tab === 'main' ? 'grid' : 'none';
-        document.getElementById('historyView').style.display = tab === 'history' ? 'block' : 'none';
+    function tab(t) {
+        document.getElementById('mainView').style.display = t==='main'?'grid':'none';
+        document.getElementById('historyView').style.display = t==='history'?'block':'none';
         document.getElementById('menuView').style.display = 'none';
-        
-        document.getElementById('navMain').classList.toggle('active', tab === 'main');
-        document.getElementById('navHistory').classList.toggle('active', tab === 'history');
-        if(tab === 'history') loadHistory();
+        document.getElementById('btnMain').className = t==='main'?'nav-item active':'nav-item';
+        document.getElementById('btnHistory').className = t==='history'?'nav-item active':'nav-item';
+        if(t==='history') loadHistory();
     }
 
     function openCat(c) {
         document.getElementById('mainView').style.display = 'none';
-        const view = document.getElementById('menuView'); view.style.display = 'block';
+        document.getElementById('menuView').style.display = 'block';
         const container = document.getElementById('itemsContainer');
         container.innerHTML = menu[c].map(i => `
-            <div class="product-item">
+            <div class="product-card">
                 <div class="info"><b>${i.n}</b><span>${i.p} EGP</span></div>
-                <button class="add-btn" onclick="addToCart('${i.n}', ${i.p})">ADD +</button>
+                <button class="add-btn" onclick="addToCart('${i.n}', ${i.p})">ADD</button>
             </div>`).join('');
     }
 
     function addToCart(n, p) {
         cart.push({n, p});
         document.getElementById('cartBar').style.display = 'block';
-        document.getElementById('cartCount').innerText = cart.length;
-        msg("Added Successfully ✅");
+        document.getElementById('count').innerText = cart.length;
+        toast("Added ✅");
+    }
+
+    function openOrderModal() { document.getElementById('orderModal').style.display = 'flex'; }
+    function closeModals() { document.getElementById('orderModal').style.display = 'none'; }
+
+    function submitOrder() {
+        const name = document.getElementById('custName').value, table = document.getElementById('tabNum').value;
+        if(!name || !table) return toast("Missing Info! ⚠️");
+
+        const order = {
+            customer: name, table: table, items: cart,
+            total: cart.reduce((s,i)=>s+i.p, 0), status: "قيد الانتظار ⏳",
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        const ref = db.ref('orders').push();
+        ref.set(order).then(() => {
+            let ids = JSON.parse(localStorage.getItem('millionIds') || "[]");
+            ids.push(ref.key);
+            localStorage.setItem('millionIds', JSON.stringify(ids));
+            cart = [];
+            document.getElementById('cartBar').style.display = 'none';
+            closeModals();
+            toast("Order Sent! 🚀");
+            tab('history');
+        });
     }
 
     function loadHistory() {
-        const container = document.getElementById('historyContent');
-        container.innerHTML = '<p style="text-align:center; color:#666;">Loading your orders...</p>';
-        const myIds = JSON.parse(localStorage.getItem('millionOrders') || "[]");
-        
-        if(myIds.length === 0) container.innerHTML = '<p style="text-align:center; color:#666;">No orders found.</p>';
-        
-        myIds.reverse().forEach(id => {
-            db.ref('orders/' + id).on('value', snap => {
-                const o = snap.val();
-                if(!o) return;
-                const card = document.createElement('div');
-                card.className = 'order-history-card';
-                card.innerHTML = `
-                    <div class="status-badge" style="background:${o.status.includes('⏳')?'#333':o.status.includes('⚠️')?'#a50044':'#d4af37'}">${o.status}</div>
-                    <div style="font-weight:900;">Total: ${o.total} EGP</div>
-                    <div style="font-size:0.8rem; color:#888;">Order ID: ${id.slice(-5)}</div>
-                    ${o.status.includes('⏳') ? `<button onclick="cancelReq('${id}')" style="margin-top:10px; background:none; border:1px solid #a50044; color:#a50044; padding:5px 15px; border-radius:10px; font-weight:bold;">Request Cancel</button>` : ''}
-                `;
-                container.appendChild(card);
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        const ids = JSON.parse(localStorage.getItem('millionIds') || "[]");
+        ids.reverse().forEach(id => {
+            db.ref('orders/'+id).on('value', s => {
+                const o = s.val(); if(!o) return;
+                list.innerHTML += `<div style="background:#1a1a1a; padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #333;">
+                    <span style="color:var(--gold); font-weight:bold;">${o.status}</span><br>
+                    <b>Total: ${o.total} EGP</b><br>
+                    ${o.status.includes('⏳') ? `<button onclick="cancelReq('${id}')" style="color:red; background:none; border:none; margin-top:5px;">Cancel Order</button>` : ''}
+                </div>`;
             });
         });
     }
 
     function cancelReq(id) {
-        db.ref('orders/' + id).update({ status: "طلب إلغاء معلق ⚠️" });
-        msg("Cancel Request Sent! ⚠️");
-    }
-
-    // إتمام الطلب وحفظ الـ ID في الموبايل
-    function openCheckout() {
-        const name = prompt("Enter your Name:");
-        const table = prompt("Enter Table Number:");
-        if(!name || !table) return;
-
-        const order = {
-            customer: name, table: table, items: cart,
-            total: cart.reduce((s, i) => s + i.p, 0),
-            status: "قيد الانتظار ⏳",
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-
-        const newRef = db.ref('orders').push();
-        newRef.set(order).then(() => {
-            let myOrders = JSON.parse(localStorage.getItem('millionOrders') || "[]");
-            myOrders.push(newRef.key);
-            localStorage.setItem('millionOrders', JSON.stringify(myOrders));
-            cart = [];
-            document.getElementById('cartBar').style.display = 'none';
-            msg("Order Sent Successfully! 🚀");
-            showTab('history');
-        });
+        db.ref('orders/'+id).update({status: "طلب إلغاء معلق ⚠️"});
+        toast("Cancel Request Sent! ⚠️");
     }
 </script>
 </body>
